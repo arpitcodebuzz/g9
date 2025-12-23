@@ -1,0 +1,19 @@
+/**
+ * @param { import("knex").Knex } knex
+ * @returns { Promise<void> }
+ */
+exports.up = function (knex) {
+  return knex.schema.alterTable('invoices', (table) => {
+    table.string('totalamount').nullable()
+  })
+};
+
+/**
+ * @param { import("knex").Knex } knex
+ * @returns { Promise<void> }
+ */
+exports.down = function (knex) {
+  return knex.schema.alterTable('invoices', (table) => {
+    table.dropColumn('totalamount')
+  })
+};

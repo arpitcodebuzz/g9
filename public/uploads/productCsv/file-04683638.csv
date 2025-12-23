@@ -1,0 +1,11 @@
+No,Title,StockNo,Original_price,Selling_price,Short_description,Estimated_delivery_time
+1,product-1,p001,20000,18000,this is product's short description,2 to 3 days
+2,product-2,p002,25000,22000,this is product's short description,3 to 5 days
+3,product-3,p003,15000,13000,this is product's short description,2 to 3 days
+4,product-4,p004,30000,27000,this is product's short description,5 to 7 days
+5,product-5,p005,17000,15000,this is product's short description,4 to 6 days
+6,product-6,p006,22000,20000,this is product's short description,6 to 8 days
+7,product-7,p007,27000,25000,this is product's short description,2 to 3 days
+8,product-8,p008,20000,18500,this is product's short description,3 to 5 days
+9,product-9,p009,16500,14000,this is product's short description,6 to 8 days
+10,product-10,p010,23500,22000,this is product's short description,2 to 3 days

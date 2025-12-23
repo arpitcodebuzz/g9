@@ -1,0 +1,4877 @@
+openapi: '3.0.2'
+info:
+  title: user-api
+  version: '1.0'
+servers:
+  - url: http://192.168.0.123:5001
+
+components:
+  securitySchemes:
+    bearerAuth:
+      description: '#### Example: Bearer [TOKEN]'
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    unprocessableEntityResponse:
+      description: Validation Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Invalid email or password combination
+
+
+paths:                
+   /user/signUp:
+    post:
+      tags:
+        - Authentication
+      summary: Sign up with Email
+      description: Sign up or register a User. An OTP will be generated and stored.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - Mobile_number
+                - password
+                - ConfirmPassword
+                - registrationType
+              properties:
+                name:
+                  type: string
+                  description: name
+                  example: "Arpit" 
+                email:
+                  type: string
+                  description: email
+                  example: "arpit.codebuzz@gmail.com"
+                Mobile_number:
+                  type: string
+                  description: number
+                  example: 7878787878
+                password:
+                  type: string
+                  description: password
+                  example: "password123"
+                ConfirmPassword:
+                  type: string
+                  description: confirmPassword
+                  example: "password123"
+                registrationType:  
+                  type: string
+                  description: Registration Type
+                  enum: [Web,App]
+                  example: Web
+      responses:
+        "200":
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: A verification code has been sent to your email. Please verify the code to proceed.
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Invalid mobile number format.
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Failed to send email verification code.
+  
+  #  /user/signUpWithGoogle:
+  #     post:
+  #       tags:
+  #         - Authentication
+  #       summary: Sign up with Google
+  #       description: Sign up or register a User.
+  #       requestBody:
+  #         required: true
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               required:
+  #                 - email
+  #               properties:
+  #                 email:
+  #                   type: string
+  #                   description: email
+  #                   example: "arpit.codebuzz@gmail.com"
+  #       responses:
+  #         "200":
+  #           description: Successfully Registerd
+  #           content:
+  #             application/json:
+  #               schema:
+  #                 type: object
+  #                 properties:
+  #                   status:
+  #                     type: boolean
+  #                     example: true
+  #                   message:
+  #                     type: string
+  #                     example: Successfully Registerd.
+  #         "400":
+  #           description: Validation error
+  #           content:
+  #             application/json:
+  #               schema:
+  #                 type: object
+  #                 properties:
+  #                   status:
+  #                     type: boolean
+  #                     example: false
+  #                   message:
+  #                     type: string
+  #                     example: Invalid email format.
+  #         "500":
+  #           description: Server error
+  #           content:
+  #             application/json:
+  #               schema:
+  #                 type: object
+  #                 properties:
+  #                   status:
+  #                     type: boolean
+  #                     example: false
+  #                   message:
+  #                     type: string
+  #                     example: Failed to register user.
+
+   /user/otpMethod:
+      post:
+        summary: Send OTP via email, SMS, or WhatsApp
+        description: >
+          Sends a one-time password (OTP) to the user via the selected method.
+          In non-production environments, a static OTP (123456) is used for testing.
+        tags:
+          - Authentication
+        requestBody:
+          required: true
+          content:
+            application/x-www-form-urlencoded:
+              schema:
+                type: object
+                required:
+                  - type
+                properties:
+                  type:
+                    type: string
+                    description: OTP delivery method
+                    enum: [email, sms, whatsapp]
+                    example: email
+                  email:
+                    type: string
+                    description: Required if type is email
+                    example: test@example.com
+                  Mobile_number:
+                    type: string
+                    description: Required if type is sms or whatsapp
+                    example: "9876543210"
+        responses:
+          '200':
+            description: OTP sent successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Otp sent successfully !!
+                    otp:
+                      type: integer
+                      example: 123456
+          '400':
+            description: Missing required parameters
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Email is required !!
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Something went wrong !!
+ 
+   /user/otpVerification:
+      post:
+        tags:
+          - Authentication
+        summary: OTP Verification
+        description: Verify the OTP sent to the user's email, SMS, or WhatsApp.
+        requestBody:
+          required: true
+          content:
+            application/x-www-form-urlencoded:
+              schema:
+                type: object
+                required:
+                  - otp
+                properties:
+                  email:
+                    type: string
+                    description: User's email (required if verifying via email OTP)
+                    example: "user@example.com"
+                  Mobile_number:
+                    type: string
+                    description: User's mobile number (required if verifying via SMS or WhatsApp OTP)
+                    example: "9876543210"
+                  otp:
+                    type: string
+                    description: One-Time Password sent to the user
+                    example: "123456"
+        responses:
+          "200":
+            description: OTP verified successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Otp verification successful. Please proceed to the next step.
+                    authentication:
+                      type: object
+                      properties:
+                        accessToken:
+                          type: string
+                          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        refreshToken:
+                          type: string
+                          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        expireAt:
+                          type: integer
+                          example: 1733846400
+          "400":
+            description: Validation error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Email or Mobile number is required.
+          "401":
+            description: Invalid or expired OTP
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: OTP expired !!
+          "500":
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Something went wrong !!
+
+  #  /user/MobileOtpVerification:
+  #     post:
+  #       tags:
+  #         - Authentication
+  #       summary: Mobile OTP Verification
+  #       description: Verifies mobile number using OTP and returns access & refresh tokens.
+  #       requestBody:
+  #         required: true
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               required:
+  #                 - Mobile_number
+  #                 - mobile_otp
+  #               properties:
+  #                 Mobile_number:
+  #                   type: string
+  #                   example: "9876543210"
+  #                   description: Registered mobile number
+  #                 mobile_otp:
+  #                   type: string
+  #                   example: "123456"
+  #                   description: OTP sent to the mobile number
+  #       responses:
+  #         "200":
+  #           description: OTP verified successfully and token returned
+  #           content:
+  #             application/json:
+  #               schema:
+  #                 type: object
+  #                 properties:
+  #                   status:
+  #                     type: boolean
+  #                     example: true
+  #                   message:
+  #                     type: string
+  #                     example: Mobile OTP verified successfully. Step 3 completed!
+  #                   authentication:
+  #                     type: object
+  #                     properties:
+  #                       accessToken:
+  #                         type: string
+  #                         example: "eyJhbGciOiJIUzI1NiIsInR..."
+  #                       refreshToken:
+  #                         type: string
+  #                         example: "fef12fb12da34..."
+  #                       expireAt:
+  #                         type: integer
+  #                         example: 1721828234
+  #         "400":
+  #           description: Validation error or invalid OTP
+  #           content:
+  #             application/json:
+  #               schema:
+  #                 type: object
+  #                 properties:
+  #                   status:
+  #                     type: boolean
+  #                     example: false
+  #                   message:
+  #                     type: string
+  #                     example: Invalid OTP !!
+  #         "500":
+  #           description: Internal server error
+  #           content:
+  #             application/json:
+  #               schema:
+  #                 type: object
+  #                 properties:
+  #                   status:
+  #                     type: boolean
+  #                     example: false
+  #                   message:
+  #                     type: string
+  #                     example: Something went wrong !!
+
+                 
+   /user/userAddress:
+    post:
+      tags:
+        - Authentication
+      summary: Add user detail 
+      security:
+        - bearerAuth: []
+      description: Add user address detail
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - address_line_1
+                - address_line_2
+                - city
+                - state
+                - country
+                - postal_code
+                - address_type
+              properties:
+                address_line_1:
+                  type: string
+                  description: address_line_1
+                  example: "A-201 abc" 
+                address_line_2:
+                  type: string
+                  description: address_line_2
+                  example: "A-201 abc"
+                city:
+                  type: string
+                  description: city
+                  example: surat
+                state:
+                  type: string
+                  description: state
+                  example: Gujrat
+                country:
+                  type: string
+                  description: country
+                  example: India
+                postal_code:
+                  type: string
+                  description: postal_code
+                  example : 401202
+                address_type:
+                  type: string
+                  description: Type of address (select from dropdown)
+                  enum: [Home, Work, Other]
+                  example: Home              
+      responses:
+        "200":
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: A verification code has been sent to your email. Please verify the code to proceed.
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Invalid mobile number format.
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Failed to send email verification code.
+  
+
+   /user/resendOtp:
+      post:
+        tags:
+          - Authentication
+        summary: Resend OTP to email or mobile based on type
+        description: Allows user to resend OTP to either their email or mobile number based on the `type` provided.
+        requestBody:
+          required: true
+          content:
+            application/x-www-form-urlencoded:
+              schema:
+                type: object  
+                required:
+                   - type
+                properties:
+                  email:
+                    type: string
+                    format: email
+                    example: user@example.com
+                  Mobile_number:
+                    type: string
+                    example: "9876543210"
+                  type:
+                    type: string
+                    enum: [email, sms,whatsapp]
+                    description: Choose where to send OTP – "email" or "Mobile_number"
+                    example: email  
+        responses:
+          '200':
+            description: OTP resend status
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: OTP resent successfully to email.
+          '400':
+            description: Bad request
+          '500':
+            description: Server error
+
+   /user/signIn:
+      post:
+        tags:
+          - Authentication
+        summary: Sign in with Email
+        description: Sign in or login a User.
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - password
+                properties:
+                  email:
+                    type: string
+                    description: email
+                    example: "arpit.codebuzz@gmail.com"
+                  Mobile_number:
+                    type: string
+                    description: Mobile number
+                    example: 8456259856  
+                  password:
+                    type: string
+                    description: password
+                    example: "password123"
+        responses:
+          "200":
+            description: Sign in successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Sign in successfully.
+                    data:
+                      type: object
+                      properties:
+                        token:
+                          type: string
+                          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+          "400":
+            description: Validation error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Invalid data format.
+          "500":
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Failed to SignIn.
+
+
+   /user/signInOrSignUpWithGoogle:
+      post:
+        tags:
+          - Authentication
+        summary: Sign in with Google
+        description: Sign in or login a User with google.
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - email
+                properties:
+                  email:
+                    type: string
+                    description: email
+                    example: "arpit.codebuzz@gmail.com"
+                  Mobile_number:
+                    type: string
+                    description: Mobile_number
+                    example: "9845412546"
+                  name:
+                    type: string
+                    description: name
+                    example: "arpit"    
+        responses:
+          "200":
+            description: Sign in successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Sign in successfully.
+                    data:
+                      type: object
+                      properties:
+                        token:
+                          type: string
+                          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+          "400":
+            description: Validation error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Invalid data format.
+          "500":
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Failed to SignIn.
+   
+   /user/forgetPassword:
+      post:
+        tags:
+          - Authentication
+        summary: Send OTP to email or mobile for password reset
+        description: Sends to the user's email or mobile number
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - type
+                properties:
+                  email:
+                    type: string
+                    format: email
+                    example: user@example.com
+                  Mobile_number:
+                    type: string
+                    example: "9876543210"
+        responses:
+          '200':
+            description: OTP sent response
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: OTP sent successfully to email.
+          '400':
+            description: Validation or user not found
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Email does not exist
+
+   /user/changePassword:
+      post:
+        tags:
+          - Authentication
+        summary: Change Password
+        security:
+        - bearerAuth: []
+        description: Change the password of the user.
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - password
+                  - ConfirmPassword
+                properties:
+                  password:
+                    type: string
+                    description: password
+                    example: "password12"
+                  ConfirmPassword:
+                    type: string
+                    description: ConfirmPassword
+                    example: "password12"
+        responses:
+          "200":
+            description: Password changed successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Password changed successfully.
+
+          "400":
+            description: Validation error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Invalid data format.
+          "500":
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Failed to SignIn.
+
+   /blogs/list:
+      get:
+        summary: Get all Data
+        tags:
+          - Blogs
+        parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number for pagination
+        - in: query
+          name: perPage
+          schema:
+            type: integer
+            default: 10  
+        responses:
+          '200':
+            description: List of product fetched successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Data fetched successfully!
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Data not fetched !!
+   
+   /blogs/detail/{id}:
+      get:
+        summary: Get data by ID
+        tags:
+          - Blogs
+        parameters:
+          - name: id
+            in: path
+            description: ID of the blogs to retrieve
+            required: true
+            schema:
+              type: integer
+        responses:
+          '200':
+            description: Data fetched successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Data fetched successfully!
+          '404':
+            description: Data not found
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Data not found
+
+   /account/userData:
+      get:
+        summary: Get all Data
+        tags:
+          - Account Overview
+        security:
+          - bearerAuth: [] 
+        responses:
+          '200':
+            description: List of user fetched successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Data fetched successfully!
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Data not fetched !!
+        
+   /account/edit:
+      post:
+        tags:
+          -  Account Overview
+        summary: Edit profile
+        description: Update profile details by blog ID.
+        security:
+          - bearerAuth: []
+        requestBody:
+          required: true
+          content:
+            multipart/form-data:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: name
+                    example: Arpit
+                  email:
+                    type: string
+                    description: email
+                    example: abc@gmail.com
+                  Mobile_number:
+                    type: string
+                    description: number
+                    example: 7878787878  
+                  profile:
+                    type: string
+                    format: binary
+                    description: Image file to upload
+        responses:
+          "200":
+            description: Blog updated successfully.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Blog updated successfully.
+          "400":
+            description: Validation error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Invalid data format.
+          "500":
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Failed to update blog.
+  
+   /account/userAddress:
+      get:
+        summary: Get all Data
+        tags:
+          - Account Overview
+        security:
+          - bearerAuth: [] 
+        responses:
+          '200':
+            description: List of user fetched successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Data fetched successfully!
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Data not fetched !!
+   
+   
+   /changePassword/changePassword:
+      post:
+        tags:
+          - change Password
+        summary: Change Password
+        security:
+        - bearerAuth: []
+        description: Change the password of the user.
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - OldPassword
+                  - NewPassword
+                  - Confirmpassword
+                properties:
+                  OldPassword:
+                    type: string
+                    description: OldPassword
+                    example: "password12"
+                  NewPassword:
+                    type: string
+                    description: NewPassword
+                    example: "password123"  
+                  Confirmpassword:
+                    type: string
+                    description: Confirmpassword
+                    example: "password123"
+        responses:
+          "200":
+            description: Password changed successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Password changed successfully.
+
+          "400":
+            description: Validation error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Invalid data format.
+          "500":
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Failed to SignIn.
+
+ 
+
+   /ManageAddress/list:
+      get:
+        summary: Get all Data
+        tags:
+          - Manage Address
+        security:
+          - bearerAuth: [] 
+        responses:
+          '200':
+            description: List of user fetched successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Data fetched successfully!
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Data not fetched !!
+      
+   /ManageAddress/setPrimary/{id}:
+      post:
+        tags:
+          - Manage Address
+        security:
+          - bearerAuth: []   
+        summary: Set a user address as primary
+        description: Marks the selected address as primary and unsets all other addresses for the same user.
+        parameters:
+          - in: path
+            name: id
+            required: true
+            schema:
+              type: integer
+            description: ID of the address to set as primary
+        responses:
+          '200':
+            description: Address set as primary successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Address set as primary successfully!
+          '404':
+            description: Address not found
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Address not found
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Something went wrong
+
+   /ManageAddress/delete/{id}:
+      delete:
+        summary: Delete a Address by ID
+        tags:
+          - Manage Address
+        security:
+          - bearerAuth: []  
+        parameters:
+          - name: id
+            in: path
+            description: ID of the address to delete
+            required: true
+            schema:
+              type: integer
+        responses:
+          '200':
+            description: Address deleted successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Address deleted successfully
+          '404':
+            description: user not found
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Data not found
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Error deleting doner
+   
+   /ManageAddress/edit/{id}:
+      post:
+        tags:
+          - Manage Address
+        summary: Edit Address
+        description: Update Address details by product ID.
+        security:
+          - bearerAuth: []
+        parameters:
+          - in: path
+            name: id
+            required: true
+            schema:
+              type: integer
+            description: Address ID to edit
+        requestBody:
+          required: true
+          content:
+            application/x-www-form-urlencoded:
+              schema:
+                type: object
+                required: []
+                properties:
+                  address_line_1:
+                    type: string
+                    description: address_line_1
+                    example: "A-201 abc" 
+                  address_line_2:
+                    type: string
+                    description: address_line_2
+                    example: "A-201 abc"
+                  city:
+                    type: string
+                    description: city
+                    example: surat
+                  state:
+                    type: string
+                    description: state
+                    example: Gujrat
+                  country:
+                    type: string
+                    description: country
+                    example: India
+                  postal_code:
+                    type: string
+                    description: postal_code
+                    example : 401202
+                  address_type:
+                    type: string
+                    description: Type of address (select from dropdown)
+                    enum: [Home, Work, Other]
+                    example: Home              
+        responses:
+          "200":
+            description: Product updated successfully.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Product updated successfully.
+          "400":
+            description: Validation error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Invalid data format.
+          "500":
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Failed to update product.
+
+   /wishlist/add:
+      post:
+        tags:
+          - Wishlist
+        summary: Add product to wishlist
+        description: Adds a specific product variant (with purity and metal) to the authenticated user's wishlist.
+        security:
+          - bearerAuth: []
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - product_id
+                  - purityValue
+                  - metalId
+                properties:
+                  product_id:
+                    type: integer
+                    description: ID of the product to add to wishlist
+                    example: 12
+                  purityValue:
+                    type: integer
+                    description: Purity value of the product
+                    example: 5
+                  metalId:
+                    type: integer
+                    description: Metal ID of the product
+                    example: 2
+        responses:
+          "200":
+            description: Product added to wishlist
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Product added to wishlist
+          "400":
+            description: Product already exists in wishlist
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Product already in wishlist
+          "401":
+            description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Unauthorized
+          "500":
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Something went wrong
+
+  
+   /wishlist/list:
+      get:
+        tags:
+          - Wishlist
+        summary: Get Wishlist of Logged-in User
+        description: Returns all wishlist products of the authenticated user in a grouped array format.
+        security:
+          - bearerAuth: []
+        parameters:      
+          - in: query
+            name: currency
+            schema:
+              type: string
+              example: 
+            required: false
+            description: Currency code to convert product prices (e.g., USD, EUR, GBP). Default is INR.
+        responses:
+          "200":
+            description: Wishlist fetched successfully!
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Wishlist fetched successfully!
+                    data:
+                      type: object
+                      properties:
+                        user_id:
+                          type: integer
+                          example: 21
+                        currency:      
+                          type: string
+                          example: 
+                        wishlist:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              product_id:
+                                type: integer
+                                example: 1
+                              title:
+                                type: string
+                                example: Product A
+                              description:
+                                type: string
+                                example: Description of Product A
+                              selling_price:
+                                type: number
+                                example: 100
+                              original_price:
+                                type: number
+                                example: 120
+                              images:
+                                type: array
+                                items:
+                                  type: string
+                                  example: https://example.com/uploads/productmedia/product-a.jpg
+          "401":
+            description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Unauthorized access
+          "500":
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Something went wrong !!
+ 
+   /wishlist/delete:
+      delete:
+        tags:
+          - Wishlist
+        summary: Remove a specific product variant from wishlist
+        description: Removes a product from the wishlist JSON array based on product_id, purityValue, and metalId for the authenticated user.
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - product_id
+                  - purityValue
+                  - metalId
+                properties:
+                  product_id:
+                    type: integer
+                    description: ID of the product to remove from wishlist
+                  purityValue:
+                    type: integer
+                    description: Purity value of the product variant to remove
+                  metalId:
+                    type: integer
+                    description: Metal ID of the product variant to remove
+        security:
+          - bearerAuth: []
+        responses:
+          200:
+            description: Product removed successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                    message:
+                      type: string
+          404:
+            description: Product or wishlist not found
+          500:
+            description: Internal server error
+
+   /user/signOut:
+      get:
+        tags:
+          - signOut
+        summary: Sign out the authenticated user
+        description: Invalidates the session on the client side by simply removing the token. No token revocation is done on the server.
+        security:
+          - bearerAuth: []
+        responses:
+          '200':
+            description: Signout successful
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: User signed out successfully!
+          '401':
+            description: Unauthorized - missing or invalid token
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Invalid token
+
+   
+    
+   /contact-us/add:
+      post:
+        tags:
+          - contact us
+        summary: Add Contact Us data
+        description: Add data
+        security:
+          - bearerAuth: []
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - name
+                  - email_mobileNo
+                properties:
+                  name:
+                    type: string
+                    description: name
+                    example: Raj
+                  email_mobileNo:
+                    type: string
+                    description: email/Mobile
+                    example: 12345789 
+                  message:
+                    type: string
+                    description: message
+                    example: Hello world   
+                  # contactImage:
+                  #   type: string
+                  #   format: binary
+                  #   description: Image file to upload
+                  # contactVideo:
+                  #     type: string
+                  #     format: binary
+                  #     description:  video     
+        responses:
+          "200":
+            description: contact us data added
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Product added to wishlist
+          "400":
+            description: Product already exists in wishlist
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Product already in wishlist
+          "401":
+            description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Unauthorized
+          "500":
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Something went wrong
+     
+
+   /cart/add:
+      post:
+        tags:
+          - Cart
+        summary: Add product to cart
+        description: Adds a product to the user's cart. If the product already exists, increases the quantity.
+        security:
+          - bearerAuth: []
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - products
+                  - purityValue
+                  - metalId
+                properties:
+                  products:
+                    type: integer
+                    example: 34
+                  purityValue:
+                    type: integer
+                    example: 1  
+                  metalId:
+                    type: integer
+                    example: 1   
+                  qty:
+                    type: integer
+                    example: 2
+        responses:
+          '200':
+            description: Product added to cart successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                    message:
+                      type: string
+          '400':
+            description: Invalid input
+          '401':
+            description: Unauthorized  
+
+ 
+   /cart/list:
+      get:
+        tags:
+          - Cart
+        summary: Get cart of Logged-in User
+        description: Returns all wishlist products of the authenticated user in a grouped array format.
+        parameters:      
+          - in: query
+            name: currency
+            schema:
+              type: string
+              example: 
+            required: false
+            description: Currency code to convert product prices (e.g., USD, EUR, GBP). Default is INR.
+        security:
+          - bearerAuth: []
+        responses:
+          "200":
+            description: cart data fetched successfully!
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: cart data fetched successfully!
+                    data:
+                      type: object
+                      properties:
+                        userId:
+                          type: integer
+                          example: 21
+                        cart:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              productId:
+                                type: integer
+                                example: 1
+                              title:
+                                type: string
+                                example: Product A
+                              description:
+                                type: string
+                                example: Description of Product A
+                              selling_price:
+                                type: number
+                                example: 100
+                              original_price:
+                                type: number
+                                example: 120
+                              image:
+                                type: string
+                                example: product-a.jpg
+          "401":
+            description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Unauthorized access
+          "500":
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Something went wrong !!
+
+   /cart/cartQty:
+      post:
+        summary: Update product quantity in cart
+        description: Update the quantity of a product in the user's cart. Subtotal and total are automatically recalculated.
+        security:
+          - bearerAuth: []
+        tags:
+          - Cart
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: integer
+                    example: 123
+                    description: ID of the product to update
+                  metalId:
+                    type: integer
+                    example: 123
+                    description: ID of the metal
+                  purityValue:
+                    type: integer
+                    example: 123
+                    description: ID of the purity  
+                  qty:
+                    type: integer
+                    example: 2
+                    description: Desired quantity of the product (minimum 1)
+                required:
+                  - products
+                  - qty
+                  - purityValue
+                  - metalId
+        responses:
+          '200':
+            description: Cart updated successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Cart updated successfully
+                    cartItem:
+                      type: object
+                      properties:
+                        productId:
+                          type: integer
+                          example: 123
+                        qty:
+                          type: integer
+                          example: 2
+                        subtotal:
+                          type: number
+                          format: float
+                          example: 500.0
+                    total:
+                      type: number
+                      format: float
+                      example: 1500.0
+          '400':
+            description: Bad request (e.g., product not found)
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Product not found in cart
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Something went wrong !!
+  
+   /cart/delete:
+      delete:
+        tags:
+          - Cart
+        summary: Remove a product variant from cart
+        description: Removes a specific product variant from the cart JSON array for the authenticated user.
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  productId:
+                    type: integer
+                    example: 123
+                    description: ID of the product to remove
+                  purityValue:
+                    type: integer
+                    example: 5
+                    description: Purity value of the product
+                  metalId:
+                    type: integer
+                    example: 4
+                    description: Metal ID of the product
+                required:
+                  - productId
+                  - purityValue
+                  - metalId
+        security:
+          - bearerAuth: []
+        responses:
+          '200':
+            description: Product removed successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                    message:
+                      type: string
+          '404':
+            description: Product not found
+          '500':
+            description: Internal server error
+
+   /cart/orderSummary:
+      get:
+        tags:
+          - OrderSummary
+        summary: Get Order Summary
+        description: Returns a summary of the order, including items, subtotal, taxes, discounts, and total.
+        parameters:      
+          - in: query
+            name: currency
+            schema:
+              type: string
+              example: 
+            required: false
+            description: Currency code to convert product prices (e.g., USD, EUR, GBP). Default is INR.
+        security:
+          - bearerAuth: []
+        responses:
+          '200':
+            description: Order summary retrieved successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/OrderSummary'
+          '404':
+            description: Order not found
+          '400':
+            description: Invalid request
+
+
+   /products/Categorylist:
+      get:
+        summary: Get all Data
+        tags:
+          - products
+        responses:
+          '200':
+            description: List of category fetched successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Data fetched successfully!
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Data not fetched !!
+ 
+   /products/subCategoryList:
+      get:
+        summary: Get subcategory list
+        description: Returns a list of all subcategories. Optionally filters by category ID.
+        tags:
+          - products
+        parameters:
+          - in: query
+            name: categoryId
+            schema:
+              type: integer
+            required: false
+            description: Filter subcategories by category ID
+        responses:
+          '200':
+            description: Successful response
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Subcategory data fetched successfully !!
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          name:
+                            type: string
+                            example: Electronics
+                          categoryId:
+                            type: integer
+                            example: 2
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Something went wrong !!
+   
+   /products/productList:
+      get:
+        summary: Get Product List
+        description: Retrieve a list of products, optionally filtered by categoryId or subCategoryId.
+        tags:
+          - products
+        parameters:
+          - in: query
+            name: categoryId
+            schema:
+              type: integer
+            description: Filter by Category ID (optional)
+          - in: query
+            name: subCategoryId
+            schema:
+              type: integer
+            description: Filter by Subcategory ID (optional) 
+          - in: query
+            name: metals
+            schema:
+              type: array
+              items:
+                type: integer
+              example: []
+            style: form
+            explode: true
+            required: false
+            description: Array of metal IDs to filter by  
+          - in: query
+            name: stoneShapeId
+            schema:
+              type: array
+              items:
+                type: integer
+              example: []
+            style: form
+            explode: true
+            required: false
+            description: Array of metal IDs to filter by  
+          - in: query
+            name: purity
+            schema:
+              type: array
+              items:
+                type: integer
+              example: []
+            style: form
+            explode: true
+            required: false
+            description: Array of purity IDs to filter by    
+          - name: discounted
+            in: query
+            required: false
+            schema:
+              type: boolean
+              enum: [true, false]
+            description: "Filter products by discounted (true or false). Will be mapped internally to 1 or 0 in DB."
+          - name: topSelling
+            in: query
+            required: false
+            schema: 
+              type: boolean
+              enum: [true, false]
+            description: "Filter products by topSelling availability (true or false). Will be mapped internally to 1 or 0 in DB."  
+          - name: readyToShip
+            in: query
+            required: false
+            schema: 
+              type: boolean
+              enum: [true, false]
+            description: "Filter products by ready-to-ship availability (true or false). Will be mapped internally to 1 or 0 in DB." 
+          - name: newArrival
+            in: query
+            required: false
+            schema: 
+              type: boolean
+              enum: [true, false]
+            description: "Filter products by newArrival availability (true or false). Will be mapped internally to 1 or 0 in DB."                   
+          - in: query
+            name: page
+            schema:
+              type: integer
+            required: false
+            description: Filter subcategories by page
+          - in: query
+            name: perPage
+            schema:
+              type: integer
+            required: false
+            description: Filter subcategories by perpage
+          - name: minPrice
+            in: query
+            required: false
+            schema:
+              type: number
+              format: float
+            description: "Minimum price to filter products"
+          - name: maxPrice
+            in: query
+            required: false
+            schema:
+              type: number
+              format: float
+            description: "Maximum price to filter products"
+          - name: search
+            in: query
+            required: false
+            schema:
+              type: string
+            description: "Search products by name or description"  
+          - in: query
+            name: currency
+            schema:
+              type: string
+              example: 
+            required: false
+            description: Currency code to convert product prices (e.g., USD, EUR, GBP). Default is INR.  
+        responses:
+          '200':
+            description: Successful response with product list
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Product list fetched successfully !!
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          name:
+                            type: string
+                            example: Sample Product
+                          categoryId:
+                            type: integer
+                            example: 2
+                          subCategoryId:
+                            type: integer
+                            example: 3
+                          price:
+                            type: number
+                            example: 499.99
+          '400':
+            description: Invalid input
+          '500':
+            description: Server error
+
+   
+   /products/getmetals:
+      get:
+        summary: Get all Data
+        tags:
+          - products
+        responses:
+          '200':
+            description: List of metals fetched successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Data fetched successfully!
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Data not fetched !!
+
+   /products/getgoldPurity:
+      get:
+        summary: Get all Data
+        tags:
+          - products
+        responses:
+          '200':
+            description: List of metals fetched successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Data fetched successfully!
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Data not fetched !!
+    
+   /products/getStoneShape:
+      get:
+        summary: Get all Data
+        tags:
+          - products
+        responses:
+          '200':
+            description: List of metals fetched successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Data fetched successfully!
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Data not fetched !!
+   
+   /products/detail/{id}:
+      get:
+        summary: Get data by ID
+        tags:
+          - products
+        parameters:
+          - name: id
+            in: path
+            description: ID of the products to retrieve
+            required: true
+            schema:
+              type: integer
+          - in: query
+            name: currency
+            schema:
+              type: string
+              example: 
+            required: false
+            description: Currency code to convert product prices (e.g., USD, EUR, GBP). Default is INR.      
+        responses:
+          '200':
+            description: Data fetched successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Data fetched successfully!
+          '404':
+            description: Data not found
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Data not found
+
+   /products/topSelling:
+      get:
+        summary: Get all Data
+        tags:
+          - topSelling
+        parameters:      
+          - in: query
+            name: currency
+            schema:
+              type: string
+              example: 
+            required: false
+            description: Currency code to convert product prices (e.g., USD, EUR, GBP). Default is INR.  
+        responses:
+          '200':
+            description: List of faqs fetched successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Data fetched successfully!
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Data not fetched !!
+   
+   /products/priceFilter:
+      get:
+        tags:
+          - products
+        summary: Get price range of products
+        description: Returns the minimum and maximum selling price of products based on optional filters.
+        parameters:
+          - in: query
+            name: categoryId
+            schema:
+              type: integer
+            description: Filter by category ID
+          - in: query
+            name: subCategoryId
+            schema:
+              type: integer
+            description: Filter by subcategory ID
+          - in: query
+            name: metals
+            schema:
+              type: string
+            description: Filter by metal IDs (comma-separated)
+            example: "1,2,3"
+          - in: query
+            name: stoneShapeId
+            schema:
+              type: string
+            description: Filter by stone shape IDs (comma-separated)
+            example: "2,5"
+          - in: query
+            name: purity
+            schema:
+              type: string
+            description: Filter by gold purity IDs (comma-separated)
+            example: "1,3"
+          - in: query
+            name: readyToShip
+            schema:
+              type: boolean
+            description: Filter by ready to ship products
+          - in: query
+            name: discounted
+            schema:
+              type: boolean
+            description: Filter by discounted products
+          - in: query
+            name: topSelling
+            schema:
+              type: boolean
+            description: Filter by top selling products
+          - in: query
+            name: newArrival
+            schema:
+              type: boolean
+            description: Filter by new arrival products
+          - in: query
+            name: search
+            schema:
+              type: string
+            description: Search by product title
+          - in: query
+            name: currency
+            schema:
+              type: string
+            description: Convert price range to target currency (default is INR)
+            example:  
+        responses:
+          "200":
+            description: Min and max price fetched successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Price range fetched successfully !!
+                    data:
+                      type: object
+                      properties:
+                        minPrice:
+                          type: number
+                          example: 5000
+                        maxPrice:
+                          type: number
+                          example: 15000
+          "500":
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Something went wrong !!
+
+   /faq/list:
+      get:
+        summary: Get all Data
+        tags:
+          - Faqs
+        responses:
+          '200':
+            description: List of faqs fetched successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Data fetched successfully!
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Data not fetched !!
+
+   /policy/list:
+    get:
+      summary: Get all Data
+      tags:
+        - policy
+      security:
+        - bearerAuth: [] 
+      responses:
+        '200':
+          description: List of policy fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Data fetched successfully!
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Data not fetched !!
+
+   /slider/list:
+    get:
+      summary: Get image data
+      tags:
+        - slider
+      responses:
+        '200':
+          description: List of image fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Data fetched successfully!
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Data not fetched !!
+   
+   
+   /payment/fetch:
+      post:
+        summary: Fetch Razorpay payment details and store in orders table
+        tags:
+          - Payment
+        security:
+          - bearerAuth: []  
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - paymentId
+                properties:
+                  paymentId:
+                    type: string
+                    example: pay_KYr1234567890
+        responses:
+          '200':
+            description: Payment fetched successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    success:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Payment fetched successfully !!
+                    data:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: pay_KYr1234567890
+                        entity:
+                          type: string
+                          example: payment
+                        amount:
+                          type: integer
+                          example: 50000
+                        currency:
+                          type: string
+                          example: INR
+                        status:
+                          type: string
+                          example: captured
+                        method:
+                          type: string
+                          example: card
+          '400':
+            description: Invalid paymentId
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    success:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: PaymentId is required !!
+          '500':
+            description: Server error while fetching payment
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    success:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Something went wrong !!
+
+   /order/list:
+      get:
+        tags:
+          - Orders
+        summary: Get Orders of Logged-in User
+        description: Returns all wishlist products of the authenticated user in a grouped array format.
+        parameters:
+        - name: statusFilter
+          in: query
+          description: Filter orders by status (Pending, Delivered, Cancelled)
+          required: false
+          schema:
+            type: string
+            enum: [Pending, Delivered, Cancelled]
+        -   in: query
+            name: page
+            schema:
+              type: integer
+            required: false
+            description: Filter subcategories by page
+        -   in: query
+            name: perPage
+            schema:
+              type: integer
+            required: false
+            description: Filter subcategories by perpage 
+        -   in: query
+            name: currency
+            schema:
+              type: string
+              example: 
+            required: false
+            description: Currency code to convert product prices (e.g., USD, EUR, GBP). Default is INR.             
+        security:
+          - bearerAuth: []
+        responses:
+          "200":
+            description: Orders data fetched successfully!
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: cart data fetched successfully!
+                    data:
+                      type: object
+                      properties:
+                        userId:
+                          type: integer
+                          example: 21
+                        cart:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              productId:
+                                type: integer
+                                example: 1
+                              title:
+                                type: string
+                                example: Product A
+                              description:
+                                type: string
+                                example: Description of Product A
+                              selling_price:
+                                type: number
+                                example: 100
+                              original_price:
+                                type: number
+                                example: 120
+                              image:
+                                type: string
+                                example: product-a.jpg
+          "401":
+            description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Unauthorized access
+          "500":
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Something went wrong !!
+
+  #  /order/details/{orderId}:
+  #     get:
+  #       summary: Get order details by ID
+  #       tags:
+  #         - Orders
+  #       security:
+  #         - bearerAuth: []
+  #       parameters:
+  #       - name: orderId  
+  #         in: path
+  #         required: true
+  #         description: Order ID
+  #         schema:
+  #           type: integer
+  #       responses:
+  #         '200':
+  #           description: Order fetched successfully
+  #           content:
+  #             application/json:
+  #               schema:
+  #                 type: object
+  #                 properties:
+  #                   status:
+  #                     type: boolean
+  #                     example: true
+  #                   message:
+  #                     type: string
+  #                     example: Order fetched successfully!
+  #                   data:
+  #                     type: object
+  #                     properties:
+  #                       id:
+  #                         type: integer
+  #                         example: 10
+  #                       orderId:
+  #                         type: string
+  #                         example: "#164264"
+  #                       userId:
+  #                         type: integer
+  #                         example: 203
+  #                       items:
+  #                         type: array
+  #                         items:
+  #                           type: object
+  #                       paymentDetails:
+  #                         type: object
+  #                         properties:
+  #                           subtotal:
+  #                             type: number
+  #                             example: 22000
+  #                           gst:
+  #                             type: number
+  #                             example: 3960
+  #                           total:
+  #                             type: number
+  #                             example: 25960
+    
+   /order/addressDetail:
+      post:
+        tags:
+          - GST
+        summary: Add GST details for authenticated user
+        description: Adds GST details using the name and GST number from the request body. The user is identified using the token.
+        security:
+          - bearerAuth: []
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: "100"
+                  name:
+                    type: string
+                    example: Acme Corporation
+                  GstNumber:
+                    type: string
+                    example: 27AAECS1234F1ZB
+                  userAddressId:
+                    type: string
+                    example: 118  
+                required:
+        responses:
+          '200':
+            description: GST details added successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Gst details added successfully !!
+          '400':
+            description: Invalid input or GST already exists
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: GST details already exist for this user
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Something went wrong !! 
+
+   /order/Cancelled:
+      post:
+        tags:
+          - Orders
+        summary: Cancel an order
+        security:
+          - bearerAuth: []
+        description: Cancels the entire order if no products have been delivered. Fails if even one product is delivered.
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: integer
+                    example: 12
+                required:
+                  - orderId
+        responses:
+          '200':
+            description: Order cancellation response
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Order cancelled successfully!
+          '400':
+            description: Invalid input or business rule violation
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Order cannot be cancelled because some products are already delivered.
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Something went wrong while cancelling the order!
+
+    
+   /order/alldetails/{orderId}:
+      get:
+        summary: Get detailed order information by orderId
+        security:
+          - bearerAuth: []
+        tags:
+          - Orders
+        parameters:
+          - name: orderId
+            in: path
+            description: Numeric ID of the order to fetch
+            required: true
+            schema:
+              type: integer
+              example: 18
+          - in: query
+            name: currency
+            schema:
+              type: string
+              example: 
+            required: false
+            description: Currency code to convert product prices (e.g., USD, EUR, GBP). Default is INR.    
+        responses:
+          '200':
+            description: Order details fetched successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Order details fetched successfully!
+                    data:
+                      type: object
+                      properties:
+                        orderId:
+                          type: string
+                          example: "#224413"
+                        createdAt:
+                          type: string
+                          format: date-time
+                          example: "2025-09-12T04:25:45.000Z"
+                        status:
+                          type: string
+                          example: "Pending"
+                          enum: [Pending, Delivered, Cancelled]
+                        user:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 203
+                            name:
+                              type: string
+                              example: "Acme Corporation"
+                            email:
+                              type: string
+                              example: "user@example.com"
+                        address:
+                          type: object
+                          nullable: true
+                          description: User shipping address details
+                          properties:
+                            id:
+                              type: integer
+                              example: 118
+                            street:
+                              type: string
+                              example: "123 Main St"
+                            city:
+                              type: string
+                              example: "London"
+                            state:
+                              type: string
+                              example: "Greater London"
+                            postalCode:
+                              type: string
+                              example: "SW1A 1AA"
+                            country:
+                              type: string
+                              example: "UK"
+                        items:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              productId:
+                                type: integer
+                                example: 145
+                              title:
+                                type: string
+                                example: "Gold Ring"
+                              quantity:
+                                type: integer
+                                example: 2
+                              price:
+                                type: number
+                                format: float
+                                example: 883.00
+                              subtotal:
+                                type: number
+                                format: float
+                                example: 1766.00
+                              status:
+                                type: string
+                                enum: [Pending, Delivered, Cancelled]
+                                example: "Pending"
+                              images:
+                                type: array
+                                items:
+                                  type: string
+                                  format: uri
+                                  example: "https://api.example.com/uploads/productmedia/images-4b99047f.webp"
+                        paymentDetails:
+                          type: object
+                          properties:
+                            subtotal:
+                              type: number
+                              format: float
+                              example: 3622.00
+                            gst:
+                              type: number
+                              format: float
+                              example: 651.96
+                            total:
+                              type: number
+                              format: float
+                              example: 4273.96
+          '404':
+            description: Order not found
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Order not found!
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Something went wrong !!!
+  
+   /order/create-invoice:
+      post:
+        tags:
+          - Invoices
+        summary: Generate invoice PDF for an order
+        description: Generates a PDF invoice for the given order ID and stores the invoice details in the invoice table.
+        security:
+          - bearerAuth: []   # If using JWT, else remove
+
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                properties:
+                  id:
+                    type: integer
+                    description: ID of the order you want to generate an invoice for
+                    example: 205
+
+        responses:
+          '200':
+            description: Invoice generated successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: "Invoice generated"
+                    data:
+                      type: object
+                      properties:
+                        status:
+                          type: boolean
+                          example: true
+                        message:
+                          type: string
+                          example: "Invoice generated successfully"
+                        invoiceId:
+                          type: string
+                          example: "INV-1732020381212"
+                        invoice:
+                          type: string
+                          description: Name of the generated PDF file
+                          example: "INV-1732020381212.pdf"
+                        path:
+                          type: string
+                          description: Path to generated invoice file
+                          example: "/uploads/invoice/INV-1732020381212.pdf"
+
+          '400':
+            description: Bad request (order id missing or order not found)
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: "Order not found"
+
+          '401':
+            description: Unauthorized (if using authentication)
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: "Unauthorized"
+
+          '403':
+            description: Forbidden (if user should not generate invoice)
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: "You are not allowed to generate invoice for this order"
+
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: "Something went wrong !!" 
+   
+   /order/getInvoice:
+      get:
+        tags:
+          - Invoices
+        summary: Get all invoices for logged-in user
+        description: Fetches all invoices for the authenticated user with full URLs to PDF files.
+        security:
+          - bearerAuth: []   # JWT authentication
+        responses:
+          '200':
+            description: List of invoices fetched successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: "Invoices fetched successfully"
+                    data:
+                      type: object
+                      properties:
+                        user_id:
+                          type: integer
+                          example: 283
+                        invoices:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                                example: 1
+                              userId:
+                                type: integer
+                                example: 283
+                              orderId:
+                                type: integer
+                                example: 205
+                              orderNumber:
+                                type: string
+                                example: "ORD-20520231119"
+                              invoiceId:
+                                type: string
+                                example: "INV-1732020381212"
+                              invoice:
+                                type: string
+                                example: "INV-1732020381212.pdf"
+                              createdAt:
+                                type: string
+                                format: date-time
+                                example: "2025-11-19T10:00:00.000Z"
+                              updatedAt:
+                                type: string
+                                format: date-time
+                                example: "2025-11-19T10:00:00.000Z"
+                              url:
+                                type: string
+                                description: Full URL to access the PDF
+                                example: "https://yourdomain.com/uploads/invoice/INV-1732020381212.pdf"
+          '401':
+            description: Unauthorized (user not logged in)
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: "Unauthorized"
+          '500':
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: "Something went wrong !!"
+
+   /complaintQuery/add:
+      post:
+        tags:
+          - Complaints Query
+        summary: Submit a complaint with optional images and videos
+        description: This endpoint allows users to submit complaints or queries with supporting images and videos.
+        security:
+          - bearerAuth: []  # JWT or OAuth security
+        requestBody:
+          required: true
+          content:
+            multipart/form-data:
+              schema:
+                type: object
+                required:
+                  - name
+                  - email_mobileNo
+                  - service
+                  - serviceType
+                  - complaintImage
+                  - complaintVideo
+                properties:
+                  name:
+                    type: string
+                    example: John Doe
+                    description: Full name of the user submitting the complaint/query.
+                  email_mobileNo:
+                    type: string
+                    example: john@example.com
+                    description: Email or mobile number of the user.
+                  service:
+                    type: string
+                    enum:
+                      - Complaint
+                      - Query
+                    example: Complaint
+                    description: Choose whether this is a complaint or a query.
+                  serviceType:
+                    type: string
+                    example: Pricing
+                    description: Type of complaint or query (e.g., Pricing, Quality).
+                  message:
+                    type: string
+                    example: Product is too expensive.
+                    description: Optional message explaining the issue or concern.
+                  complaintImage:
+                    type: array
+                    items:
+                      type: string
+                      format: binary
+                    description: Optional. Up to 5 images related to the complaint.
+                  complaintVideo:
+                    type: array
+                    items:
+                      type: string
+                      format: binary
+                    description: Optional. Up to 2 videos supporting the complaint.
+        responses:
+          '200':
+            description: Complaint submitted successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Complaint submitted successfully!
+          '400':
+            description: Validation failed
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Invalid input
+                    errors:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          field:
+                            type: string
+                            example: email_mobileNo
+                          message:
+                            type: string
+                            example: email_mobileNo is required
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Something went wrong!
+
+   /home/offerbarlist:
+      get:
+        summary: Get all Data
+        tags:
+          - home
+        responses:
+          '200':
+            description: List of faqs fetched successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Data fetched successfully!
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Data not fetched !!
+
+   
+   /chatBot:
+    post:
+      tags:
+        - chatbot
+      summary: Ask a question to the chatbot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: Who is the Prime Minister of India?
+      responses:
+        "200":
+          description: Successful response from
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reply:
+                    type: string
+                    example: As of 2025, the Prime Minister of India is Narendra Modi.
+        "400":
+          description: Bad request (missing message)
+        "500":
+          description: Internal server error
+
+   /home/mediaList:
+      get:
+        summary: Get all Data
+        tags:
+          - media
+        security:
+          - bearerAuth: [] 
+        parameters:
+          - in: query
+            name: page
+            schema:
+              type: integer
+            required: false
+            description: Filter media by page
+          - in: query
+            name: perPage
+            schema:
+              type: integer
+            required: false
+            description: Filter media by perpage  
+        responses:
+          '200':
+            description: List of media fetched successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Data fetched successfully!
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Data not fetched !!
+
+
+   
+   /productSaved/add:
+      post:
+        tags:
+          - productSaved
+        summary: product save 
+        description: Adds a product to the authenticated 
+        security:
+          - bearerAuth: []
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - products
+                  - purityValue
+                  - metalId
+                properties:
+                  products:
+                    type: integer
+                    description: ID of the product to add to wishlist
+                    example: 12
+                  purityValue:
+                    type: integer
+                    example: 1  
+                  metalId:
+                    type: integer
+                    example: 1     
+        responses:
+          "200":
+            description: Product saved
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Product added 
+          "400":
+            description: Product already saved
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Product already saved
+          "401":
+            description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Unauthorized
+          "500":
+            description: Internal server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Something went wrong
+  
+   /productSaved/list:
+      get:
+        tags:
+          - productSaved
+        summary: Get productSaved of Logged-in User
+        description: Returns all productSaved products of the authenticated user in a grouped array format.
+        security:
+          - bearerAuth: []
+        parameters:      
+          - in: query
+            name: currency
+            schema:
+              type: string
+              example: 
+            required: false
+            description: Currency code to convert product prices (e.g., USD, EUR, GBP). Default is INR.
+        responses:
+          "200":
+            description: productSaved fetched successfully!
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Wishlist fetched successfully!
+                    data:
+                      type: object
+                      properties:
+                        user_id:
+                          type: integer
+                          example: 21
+                        currency:      
+                          type: string
+                          example: USD
+                        wishlist:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              product_id:
+                                type: integer
+                                example: 1
+                              title:
+                                type: string
+                                example: Product A
+                              description:
+                                type: string
+                                example: Description of Product A
+                              selling_price:
+                                type: number
+                                example: 100
+                              original_price:
+                                type: number
+                                example: 120
+                              images:
+                                type: array
+                                items:
+                                  type: string
+                                  example: https://example.com/uploads/productmedia/product-a.jpg
+          "401":
+            description: Unauthorized
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Unauthorized access
+          "500":
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Something went wrong !!
+   
+   /productSaved/delete:
+      delete:
+        tags:
+          - productSaved
+        summary: Remove a product or product variant from Saved list
+        description: Removes a specific product or a specific variant from the productSaved JSON array for the authenticated user.
+        security:
+          - bearerAuth: []
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - productId
+                  - purityValue
+                  - metalId
+                properties:
+                  productId:
+                    type: integer
+                    description: ID of the product to remove
+                    example: 335
+                  purityValue:
+                    type: integer
+                    description: Purity value of the product variant to remove
+                    example: 5
+                  metalId:
+                    type: integer
+                    description: Metal ID of the product variant to remove
+                    example: 4
+        responses:
+          '200':
+            description: Product removed successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Product removed from saved list !!
+          '400':
+            description: Bad Request - missing or invalid product ID
+          '401':
+            description: Unauthorized - user not logged in
+          '500':
+            description: Internal server error
+
+   /productSaved/movetoCart:
+      post:
+        summary: Move product variant from Saved list to Cart
+        description: Moves a specific product variant from the saved list to the cart for the authenticated user.
+        tags:
+          - productSaved
+        security:
+          - bearerAuth: []
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - productId
+                  - purityValue
+                  - metalId
+                properties:
+                  productId:
+                    type: integer
+                    description: ID of the product to move
+                    example: 12
+                  purityValue:
+                    type: integer
+                    description: Purity value of the product variant
+                    example: 5
+                  metalId:
+                    type: integer
+                    description: Metal ID of the product variant
+                    example: 4
+        responses:
+          '200':
+            description: Product moved successfully or failure response
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Product moved to cart successfully !!
+          '400':
+            description: Bad Request - missing or invalid product ID / variant info
+          '401':
+            description: Unauthorized - user not logged in
+          '500':
+            description: Internal Server Error
+
+   /ask-price:
+      post:
+        tags:
+          - Ask Price
+        summary: Ask price
+        description: Calculate gold and diamond pricing based on provided product details.
+        requestBody:
+          required: true
+          content:
+             multipart/form-data:
+              schema:
+                type: object
+                required:
+                  - name
+                  - email
+                  - mobile_number
+                  - gold_product
+                  - diamond_product
+                properties:
+                  name:
+                    type: string
+                    description: Full name of the user
+                    example: "Arpit"
+                  email:
+                    type: string
+                    format: email
+                    description: User email address
+                    example: "arpit.codebuzz@gmail.com"
+                  mobile_number:
+                    type: string
+                    description: User mobile number
+                    example: "7878787878"
+                  gold_product:
+                    type: object
+                    description: Details of the gold product
+                    properties:
+                      type:
+                        type: string
+                        example: "14k"
+                      grm:
+                        type: number
+                        example: 10
+                  diamond_product:
+                    type: array
+                    description: List of diamond products
+                    items:
+                      type: object
+                      properties:
+                        product_id:
+                          type: integer
+                          example: 1
+                        carat:
+                          type: number
+                          example: 2
+                  askpriceImg:
+                    type: string
+                    format: binary        
+        responses:
+          "200":
+            description: Gold pricing calculated successfully.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Gold pricing calculated successfully.
+          "400":
+            description: Validation error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Invalid format.
+          "500":
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Failed to calculate gold pricing.
+
+   /ask-price/get/{id}:
+      get:
+        tags:
+          - Ask Price
+        summary: Get ask price details.
+        description: Get ask price details.
+        parameters:
+          - name: id
+            in: path
+            description: Numeric ID of the ask price to fetch
+            required: true
+            schema:
+              type: integer
+              example: 18  
+        responses:
+          '200':
+            description: Data fetched successfully.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Data fetched successfully.
+          '404':
+            description: Data not found
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Data not found!
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Something went wrong !!!
+  
+   /ask-price/gold-type:
+      get:
+        tags:
+          - Ask Price
+        summary: Get gold types.
+        description: Get gold types.
+        responses:
+          '200':
+            description: Gold type fetched successfully.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Gold type fetched successfully.
+          '404':
+            description: Data not found
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Data not found!
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Something went wrong !!!
+  
+   /ask-price/diamond-type:
+      get:
+        tags:
+          - Ask Price
+        summary: Get diamond types.
+        description: Get diamond types.
+        responses:
+          '200':
+            description: Diamond type fetched successfully.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Diamond type fetched successfully.
+          '404':
+            description: Data not found
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Data not found!
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Something went wrong !!!
+  
+   
+   
+  #  /home/generateLink:
+  #     post:
+  #       tags:
+  #         - product
+  #       summary: Generate share link for a product
+  #       description: Creates a shareable link for a product by its ID
+  #       security:
+  #         - bearerAuth: []
+  #       requestBody:
+  #         required: true
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               required:
+  #                 - productId
+  #               properties:
+  #                 productId:
+  #                   type: integer
+  #                   description: ID of the product to share
+  #                   example: 101
+  #       responses:
+  #         "200":
+  #           description: Share link generated successfully
+  #           content:
+  #             application/json:
+  #               schema:
+  #                 type: object
+  #                 properties:
+  #                   status:
+  #                     type: boolean
+  #                     example: true
+  #                   message:
+  #                     type: string
+  #                     example: Share link generated
+  #                   url:
+  #                     type: string
+  #                     example: https://yourdomain.com/share/abc123xyz
+  #         "400":
+  #           description: Product not found
+  #           content:
+  #             application/json:
+  #               schema:
+  #                 type: object
+  #                 properties:
+  #                   status:
+  #                     type: boolean
+  #                     example: false
+  #                   message:
+  #                     type: string
+  #                     example: Product not found
+  #         "401":
+  #           description: Unauthorized
+  #           content:
+  #             application/json:
+  #               schema:
+  #                 type: object
+  #                 properties:
+  #                   status:
+  #                     type: boolean
+  #                     example: false
+  #                   message:
+  #                     type: string
+  #                     example: Unauthorized
+  #         "500":
+  #           description: Internal server error
+  #           content:
+  #             application/json:
+  #               schema:
+  #                 type: object
+  #                 properties:
+  #                   status:
+  #                     type: boolean
+  #                     example: false
+  #                   message:
+  #                     type: string
+  #                     example: Something went wrong
+
+  #  /home/product-details/share/{id}:
+  #     get:
+  #       tags:
+  #         - product
+  #       summary: Get product details from share link
+  #       description: Returns product details using the shared link ID
+  #       parameters:
+  #         - in: path
+  #           name: id
+  #           required: true
+  #           schema:
+  #             type: string
+  #           description: The unique share ID
+  #           example: 5Z8ZpmOymu
+  #       responses:
+  #         "200":
+  #           description: Product fetched successfully
+  #           content:
+  #             application/json:
+  #               schema:
+  #                 type: object
+  #                 properties:
+  #                   status:
+  #                     type: boolean
+  #                     example: true
+  #                   product:
+  #                     type: object
+  #                     properties:
+  #                       id:
+  #                         type: integer
+  #                         example: 101
+  #                       name:
+  #                         type: string
+  #                         example: Sample Product
+  #                       price:
+  #                         type: number
+  #                         example: 1999
+  #                       description:
+  #                         type: string
+  #                         example: Example product details...
+  #         "400":
+  #           description: Invalid or expired link
+  #           content:
+  #             application/json:
+  #               schema:
+  #                 type: object
+  #                 properties:
+  #                   status:
+  #                     type: boolean
+  #                     example: false
+  #                   message:
+  #                     type: string
+  #                     example: Invalid or expired link !!
+  #         "500":
+  #           description: Internal server error
+  #           content:
+  #             application/json:
+  #               schema:
+  #                 type: object
+  #                 properties:
+  #                   status:
+  #                     type: boolean
+  #                     example: false
+  #                   message:
+  #                     type: string
+  #                     example: Something went wrong !! 
+
+
+  #  /home/product/{id}:
+  #   get:
+  #     summary: Get deep link URL for product
+  #     description: Returns a deep link URL for the product page using the product ID.
+  #     tags:
+  #       - Deep Link
+  #     parameters:
+  #       - name: id
+  #         in: path
+  #         description: Product ID to generate deep link for
+  #         required: true
+  #         schema:
+  #           type: integer
+  #           example: 170
+  #     responses:
+  #       '200':
+  #         description: Successful response with deep link URL
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               properties:
+  #                 success:
+  #                   type: boolean
+  #                   example: true
+  #                 productId:
+  #                   type: integer
+  #                   example: 170
+  #                 deepLink:
+  #                   type: string
+  #                   example: "https://yourdomain.com/product-details/170"
+  #       '404':
+  #         description: Product not found
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               properties:
+  #                 success:
+  #                   type: boolean
+  #                   example: false
+  #                 message:
+  #                   type: string
+  #                   example: "Product not found"
+  #       '500':
+  #         description: Internal server error
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               properties:
+  #                 success:
+  #                   type: boolean
+  #                   example: false
+  #                 message:
+  #                   type: string
+  #                   example: "Internal server error"           
+
+  #  /home/productRedirect/{id}:
+  #     get:
+  #       tags:
+  #         - Redirect
+  #       summary: Redirect to product deep link
+  #       description: Redirects user to the product detail page on the frontend based on product ID.
+  #       parameters:
+  #         - name: id
+  #           in: path
+  #           required: true
+  #           schema:
+  #             type: integer
+  #           description: Product ID
+  #       responses:
+  #         '302':
+  #           description: Redirects to the product detail page
+  #         '400':
+  #           description: Invalid product ID
+  #           content:
+  #             application/json:
+  #               example:
+  #                 success: false
+  #                 message: "Invalid product ID"
+  #         '404':
+  #           description: Product not found
+  #           content:
+  #             application/json:
+  #               example:
+  #                 success: false
+  #                 message: "Product not found"
+
+   /home/generate:
+    post:
+      tags:
+        - Product Links
+      summary: Generate deep link for a product
+      description: Generates a unique deep link that redirects to a specific product page.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - productId
+              properties:
+                productId:
+                  type: integer
+                  example: 160
+      responses:
+        '200':
+          description: Deep link created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  uniqueId:
+                    type: string
+                    format: uuid
+                    example: 17e8e6ca-ec52-4a6f-b46d-f6fa62e1228b
+                  deepLink:
+                    type: string
+                    format: uri
+                    example: https://2prbc8z4-5001.inc1.devtunnels.ms/api/home/link/17e8e6ca-ec52-4a6f-b46d-f6fa62e1228b
+        '400':
+          description: Missing productId
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: productId is required
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Internal server error
+ 
+  #  /home/link/{uniqueId}:
+  #   get:
+  #     tags:
+  #       - Product Links
+  #     summary: Redirect to product details page
+  #     description: Redirects the user to the frontend product details page based on a unique deep link ID.
+  #     parameters:
+  #       - in: path
+  #         name: uniqueId
+  #         required: true
+  #         schema:
+  #           type: string
+  #           example: ccc5553b
+  #         description: Unique ID for the deep link
+  #     responses:
+  #       '302':
+  #         description: Redirect to the product page
+  #         headers:
+  #           Location:
+  #             description: URL to redirect the user to
+  #             schema:
+  #               type: string
+  #               format: uri
+  #       '404':
+  #         description: Link not found
+  #         content:
+  #           text/plain:
+  #             schema:
+  #               type: string
+  #               example: Link not found
+  #       '500':
+  #         description: Internal server error
+  #         content:
+  #           text/plain:
+  #             schema:
+  #               type: string
+  #               example: Internal server error
+
+
+
+  
+   /home/certificateList:
+    get:
+      tags:
+        - Certificate
+      summary: Get all certificates
+      description: Fetch the list of certificates with image URLs.
+      security:
+          - bearerAuth: []
+      responses:
+        '200':
+          description: Certificates fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Certificate fetched successfully !!"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        title:
+                          type: string
+                          example: "JavaScript Mastery"
+                        subTitle:
+                          type: string
+                          example: "Advanced JS Techniques"
+                        image:
+                          type: string
+                          example: "http://localhost:3000/uploads/certificate/1699999999999-js-certificate.png"
+        '404':
+          description: No certificates found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Certificate not found !!"
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Something went wrong"                      
+
+   
+   /home/festivalList:
+    get:
+      tags:
+        - festival offer
+      summary: Get all certificates
+      description: Fetch the list of certificates with image URLs.
+      security:
+          - bearerAuth: []
+      responses:
+        '200':
+          description: Certificates fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Certificate fetched successfully !!"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        title:
+                          type: string
+                          example: "JavaScript Mastery"
+                        subTitle:
+                          type: string
+                          example: "Advanced JS Techniques"
+                        image:
+                          type: string
+                          example: "http://localhost:3000/uploads/certificate/1699999999999-js-certificate.png"
+        '404':
+          description: No certificates found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Certificate not found !!"
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Something went wrong"                      
+   
+   
+   /home/reelsList:
+    get:
+      tags:
+        - Reels
+      summary: Get all Reels
+      description: Fetch the list of Reels with image URLs.
+      security:
+          - bearerAuth: []
+      responses:
+        '200':
+          description: Reels fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Reels fetched successfully !!"
+          description: No Reels found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Reels not found !!"
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Something went wrong"                      
+   
+   
+   /home/exploreList:
+    get:
+      tags:
+        - exploreList
+      summary: Get all Reels
+      description: Fetch the list of Reels with image URLs.
+      security:
+          - bearerAuth: []
+      responses:
+        '200':
+          description: Reels fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Reels fetched successfully !!"
+          description: No Reels found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Reels not found !!"
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Something went wrong"                      
+   
+    
+   
+   /home/newArrivalList:
+    get:
+      tags:
+        - newArrival
+      summary: Get all newArrival
+      description: Fetch the list of newArrival with image URLs.
+      security:
+          - bearerAuth: []
+      responses:
+        '200':
+          description: newArrival fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "newArrival fetched successfully !!"
+          description: No newArrival found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "newArrival not found !!"
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Something went wrong"                      
+   
+
+   
+   /home/seoList:
+      get:
+        summary: Get all Data
+        tags:
+          - Seo
+        security:
+          - bearerAuth: [] 
+        responses:
+          '200':
+            description: List of seo fetched successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Data fetched successfully!
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Data not fetched !!
+   
+   /home/seoDetail/{pageName}:
+      get:
+        summary: Get SEO detail by page name
+        tags:
+          - Seo
+        security:
+          - bearerAuth: []
+        parameters:
+          - name: pageName
+            in: path 
+            required: true
+            schema:
+              type: string
+            example: home
+        responses:
+          '200':
+            description: SEO detail fetched successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: Data fetched successfully !!
+                    data:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        pageName:
+                          type: string
+                          example: home
+                        metaTitle:
+                          type: string
+                          example: Home Page Title
+                        metaDescription:
+                          type: string
+                          example: This is home page meta description
+                        keywords:
+                          type: string
+                          example: home, website, seo
+                        createdAt:
+                          type: string
+                          format: date-time
+                          example: 2025-01-01T10:00:00Z
+          '404':
+            description: No data found
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: No data found !!
+          '500':
+            description: Server error
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: boolean
+                      example: false
+                    message:
+                      type: string
+                      example: Data not fetched !!
