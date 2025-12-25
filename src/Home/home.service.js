@@ -301,6 +301,7 @@ class homeService {
 
       const formattedData = data.map(item => ({
         id: item.id,
+        redirectUrl: item.redirectUrl,
         video: item.video ? `${baseUrl}/uploads/reels/${item.video}` : null,
         createdAt: item.createdAt
       }));

@@ -6701,8 +6701,13 @@ paths:
                   type: string
                   format: binary
                   description: Video file to upload (mp4, mkv, avi, mov, webm)
+                redirectUrl:
+                  type: string
+                  description: url of the media
+                  example: https://www.lipsum.com/   
               required:
                 - reels
+                - redirectUrl
       responses:
         '200':
           description: Successful upload

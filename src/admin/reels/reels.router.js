@@ -6,7 +6,7 @@ import reelsController from '../reels/reels.controller'
 import upload from '../../common/helpers/multer'
 import validator from "../../common/config/joi-validator";
 
-routes.post('/add', adminAuthentication,upload.single('reels'), asyncWrap(reelsController.add))
+routes.post('/add', adminAuthentication, upload.single('reels'), asyncWrap(reelsController.add))
 
 routes.get('/list', adminAuthentication, asyncWrap(reelsController.list))
 

@@ -1472,8 +1472,7 @@ class orderService {
               </div>
 
               <div class="note-box">
-                <strong>Note:-</strong> Return charge of ${Number(returnCharge)} is applicable for
-                this order as per our return policy
+                <strong>Note:-</strong>This invoice constitutes valid proof of purchase and authenticity for the G9 Jewellery product described herein.
               </div>
             </div>
           </div>

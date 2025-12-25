@@ -2,7 +2,7 @@ import reelService from '../reels/reels.service'
 
 class reelController {
   async add(req, res) {
-    const data = await reelService.add(req.file)
+    const data = await reelService.add(req.file,req.body)
     res.json({ ...data })
   }
 

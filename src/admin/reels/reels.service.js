@@ -4,8 +4,9 @@ import fs from 'fs'
 import { uploadToS3, deleteFromS3 } from "../../common/config/awsBucket.config";
 
 class reelService {
-  async add(file) {
+  async add(file, body) {
     try {
+      const { redirectUrl } = body
       const reels = file ? file.filename : null
       if (!reels) {
         return {
@@ -25,6 +26,13 @@ class reelService {
         return {
           status: false,
           message: 'Only video files are allowed !!'
+        };
+      }
+
+      if (redirectUrl && !/^https?:\/\/|^www\./i.test(redirectUrl)) {
+        return {
+          status: false,
+          message: 'Invalid URL. Must start with "http://", "https://" or "www."'
         };
       }
 
@@ -48,7 +56,8 @@ class reelService {
 
 
       await knex('reels').insert({
-        video: reels
+        video: reels,
+        redirectUrl
       })
 
       return {
@@ -81,6 +90,7 @@ class reelService {
 
       const formattedData = data.map(item => ({
         id: item.id,
+        redirectUrl:item.redirectUrl,
         video: item.video ? `${baseUrl}/uploads/reels/${item.video}` : null,
         createdAt: item.createdAt
       }));
