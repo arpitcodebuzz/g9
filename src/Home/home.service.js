@@ -441,6 +441,197 @@ class homeService {
     }
   }
 
+  
+  async sentOtp(body) {
+    try {
+      const { email_Mobile } = body
+
+      if (!email_Mobile) {
+        return {
+          status: false,
+          message: 'Email or mobileNumber is required !!'
+        }
+      }
+
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email_Mobile);
+      const isMobile = /^[6-9]\d{9}$/.test(email_Mobile);
+
+      let isUser;
+      let otp;
+      const otpExpireTime = moment().add(2, "minutes").format();
+
+      const generateOtp = () =>
+        process.env.NODE_ENV === "development"
+          ? 123456
+          : Math.floor(100000 + Math.random() * 900000);
+
+      if (isEmail) {
+        isUser = await knex('users').where({ email: email_Mobile }).first();
+
+        if (!isUser) {
+          return {
+            status: false,
+            message: 'User not found with this email !!'
+          };
+        }
+
+        otp = generateOtp();
+
+        if (email_Mobile === "testapp@gmail.com") {
+          otp = 123456;
+        } else {
+          const emailResponse = await sendDeleteAccountOtpEmail(email_Mobile, otp);
+          if (!emailResponse) {
+            return {
+              status: false,
+              message: 'Failed to send OTP via email'
+            };
+          }
+        }
+      }
+
+      if (isMobile) {
+        isUser = await knex('users').where({ Mobile_number: email_Mobile }).first();
+
+        if (!isUser) {
+          return {
+            status: false,
+            message: 'User not found with this mobile number !!'
+          };
+        }
+
+        otp = generateOtp();
+
+        const formattedNumber = email_Mobile.startsWith('+')
+          ? email_Mobile
+          : `+91${email_Mobile}`;
+
+        const response = await sentOtp(formattedNumber, otp);
+
+        if (!response?.success) {
+          return {
+            status: false,
+            message: 'Failed to send OTP via SMS'
+          };
+        }
+      }
+
+      await knex('users')
+        .where({ id: isUser.id })
+        .update({
+          otp: otp,
+          otpExpireTime: otpExpireTime,
+          lastOtpChannel: isEmail ? 'email' : 'sms',
+          updatedAt: knex.fn.now()
+        });
+
+      return {
+        status: true,
+        message: `OTP sent successfully via ${isEmail ? 'email' : 'sms'}`
+      };
+
+
+    }
+    catch (err) {
+      console.log(err);
+      return {
+        status: false,
+        message: 'Something went wrong !!'
+      }
+    }
+  }
+
+  async deleteAccount(body) {
+    try {
+      const { otp, email_Mobile } = body;
+
+      if (!email_Mobile || !otp) {
+        return {
+          status: false,
+          message: 'Email/Mobile and OTP are required !!'
+        };
+      }
+
+      const currentTime = moment().format();
+
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email_Mobile);
+      const isMobile = /^[6-9]\d{9}$/.test(email_Mobile);
+
+      if (!isEmail && !isMobile) {
+        return {
+          status: false,
+          message: 'Invalid email or mobile number'
+        };
+      }
+
+      const isUser = await knex('users')
+        .where(isEmail ? { email: email_Mobile } : { Mobile_number: email_Mobile })
+        .first();
+
+      if (!isUser) {
+        return {
+          status: false,
+          message: 'User not found !!'
+        };
+      }
+
+      if (isUser.lastOtpChannel === 'email' && !isEmail) {
+        return {
+          status: false,
+          message: 'Please verify using email (OTP was sent to email)'
+        };
+      }
+
+      if (isUser.lastOtpChannel === 'sms' && !isMobile) {
+        return {
+          status: false,
+          message: 'Please verify using mobile number (OTP was sent via SMS)'
+        };
+      }
+      if (currentTime > isUser.otpExpireTime) {
+        return {
+          status: false,
+          message: 'OTP expired !!'
+        };
+      }
+
+      if (otp.toString() !== isUser.otp) {
+        return {
+          status: false,
+          message: 'Invalid OTP'
+        };
+      }
+
+      await knex('users')
+        .where({ id: isUser.id })
+        .update({
+          otp: null,
+          otpExpireTime: null,
+          lastOtpChannel: null,
+          updatedAt: knex.fn.now()
+        });
+
+      await knex('users').where({ id: isUser.id }).del();
+
+
+      return {
+        status: true,
+        message: 'OTP verified successfully !!',
+        data: {
+          userId: isUser.id,
+          verifiedVia: isEmail ? 'email' : 'sms'
+        }
+      };
+
+    } catch (err) {
+      console.log(err);
+      return {
+        status: false,
+        message: 'Something went wrong !!'
+      };
+    }
+  }
+
 
 }
 

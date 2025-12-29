@@ -4875,3 +4875,159 @@ paths:
                     message:
                       type: string
                       example: Data not fetched !!
+   
+      
+   /home/sentOtp:
+    post:
+      tags:
+        - Account Delete
+      summary: Request OTP for account deletion
+      description: >
+        Sends an OTP to the user's email or mobile number for account deletion.
+        The system automatically detects whether the provided value is an email or mobile number.
+      security:
+        - bearerAuth: []  
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email_Mobile
+              properties:
+                email_Mobile:
+                  type: string
+                  example: test@gmail.com
+      responses:
+        200:
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: OTP sent successfully via email
+        400:
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Email or mobile number is required !!
+        404:
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: User not found with this email !!
+
+   /home/deleteAccount:
+    post:
+      tags:
+        - Account Delete
+      summary: Verify OTP for account deletion
+      description: >
+        Verifies the OTP sent to the user's registered email or mobile number.
+        This endpoint is secured and requires a valid JWT token.
+        OTP must be verified using the same channel (email or SMS) where it was sent.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email_Mobile
+                - otp
+              properties:
+                email_Mobile:
+                  type: string
+                  description: Registered email address or mobile number
+                  example: test@gmail.com
+                otp:
+                  type: string
+                  description: 6-digit OTP received via email or SMS
+                  example: "123456"
+      responses:
+        200:
+          description: OTP verified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: OTP verified successfully !!
+                  data:
+                    type: object
+                    properties:
+                      userId:
+                        type: integer
+                        example: 12
+                      verifiedVia:
+                        type: string
+                        example: email
+        400:
+          description: Validation or OTP error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Invalid or expired OTP
+        401:
+          description: Unauthorized – Invalid or missing JWT token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Unauthorized
+        404:
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: User not found !!

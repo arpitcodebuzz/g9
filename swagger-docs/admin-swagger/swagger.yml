@@ -1970,8 +1970,6 @@ paths:
                       type: string
                       example: Failed to update blog.
 
-
-    
    /contact-us/list:
       get:
         summary: Get all Data

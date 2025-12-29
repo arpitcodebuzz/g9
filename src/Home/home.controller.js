@@ -163,14 +163,24 @@ class homeController {
     res.json({ ...data })
   }
 
-  async seoList(req,res){
+  async seoList(req, res) {
     const data = await homeService.seoList()
-    res.json({...data})
+    res.json({ ...data })
   }
 
-  async seoDetail(req,res){
+  async seoDetail(req, res) {
     const data = await homeService.seoDetail(req.params)
-    res.json({...data})
+    res.json({ ...data })
+  }
+
+  async sentOtp(req, res) {
+    const data = await homeService.sentOtp(req.body)
+    res.json({ ...data })
+  }
+
+  async deleteAccount(req, res) {
+    const data = await homeService.deleteAccount(req.body)
+    res.json({ ...data })
   }
 
 }

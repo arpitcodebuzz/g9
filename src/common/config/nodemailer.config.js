@@ -41,6 +41,41 @@ G9 Team`,
   }
 };
 
+export const sendDeleteAccountOtpEmail = async (email, otp) => {
+  try {
+    const info = await transporter.sendMail({
+      from: process.env.EMAIL,
+      to: email,
+      subject: `G9 Account Deletion Verification Code`,
+      text: `
+We received a request to delete your G9 account.
+
+Your account deletion verification code is: ${otp}
+
+This code is valid for 2 minutes.
+If you did not request account deletion, please ignore this email or contact support immediately.
+
+⚠️ Deleting your account is permanent and cannot be undone.
+
+Thank you,
+G9 Team
+      `,
+    });
+
+    return {
+      success: true,
+      messageId: info.messageId,
+    };
+
+  } catch (error) {
+    console.error('Error sending delete account OTP email:', error.message);
+    return {
+      success: false,
+      message: error.message,
+    };
+  }
+};
+
 export const sendWelcomeEmail = async (to, customerName) => {
   try {
     const subject = `Welcome to the World of G9 Jewellery`;

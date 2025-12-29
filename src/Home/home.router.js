@@ -1,7 +1,7 @@
 import { Router } from "express";
 const routes = Router()
 import homeController from './home.controller'
-
+import authenticate from '../common/middleware/authenticate'
 
 routes.get('/offerbarlist', homeController.offerbarlist)
 
@@ -34,6 +34,9 @@ routes.get('/newArrivalList', homeController.newArrivalList)
 
 routes.get('/seoList',homeController.seoList)
 routes.get('/seoDetail/:pageName',homeController.seoDetail)
+
+routes.post('/sentOtp', authenticate, homeController.sentOtp)
+routes.post('/deleteAccount', authenticate, homeController.deleteAccount)
 
 
 export default routes;
