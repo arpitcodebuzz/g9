@@ -2369,18 +2369,18 @@ paths:
                       type: string
                       example: Data not fetched !!
    
-   /products/detail/{id}:
+   /products/detail/{stockNumber}:
       get:
         summary: Get data by ID
         tags:
           - products
         parameters:
-          - name: id
+          - name: stockNumber
             in: path
             description: ID of the products to retrieve
             required: true
             schema:
-              type: integer
+              type: string
           - in: query
             name: currency
             schema:
@@ -4398,9 +4398,9 @@ paths:
             schema:
               type: object
               required:
-                - productId
+                - stockNumber
               properties:
-                productId:
+                stockNumber:
                   type: integer
                   example: 160
       responses:

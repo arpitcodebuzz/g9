@@ -18,7 +18,7 @@ routes.get('/getStoneShape', asyncWrap(productController.getStoneShape))
 
 routes.get('/getgoldPurity', asyncWrap(productController.getgoldPurity))
 
-routes.get('/detail/:id', asyncWrap(productController.detail))
+routes.get('/detail/:stockNumber', asyncWrap(productController.detail))
 
 routes.get('/priceFilter', asyncWrap(productController.priceFilter))
 

@@ -674,11 +674,11 @@ class productService {
 
   async detail(params, query) {
     try {
-      const { id } = params;
+      const { stockNumber } = params;
       const currency = (query.currency || 'INR').toUpperCase().trim();
 
-      if (!id) {
-        return { status: false, message: 'Product ID is required' };
+      if (!stockNumber) {
+        return { status: false, message: 'stockNumber is required' };
       }
 
       // Fetch product data with images, metals, and materials
@@ -711,7 +711,7 @@ class productService {
           'm.name as metalName',
           'pm.productMaterials'
         )
-        .where('p.id', id);
+        .where('p.stockNumber', stockNumber);
 
       if (!data || data.length === 0) {
         return { status: false, message: 'No data found !!' };

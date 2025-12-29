@@ -92,10 +92,10 @@ class homeController {
 
   async generateLink(req, res) {
     try {
-      const { productId } = req.body;
-      if (!productId) return res.status(400).json({ message: 'productId is required' });
+      const { stockNumber } = req.body;
+      if (!produstockNumberctId) return res.status(400).json({ message: 'stockNumber is required' });
 
-      const uniqueId = await homeService.generateLink(productId);
+      const uniqueId = await homeService.generateLink(stockNumber);
 
       const deepLink = `${process.env.BASE_URL}/user-api/home/link/${uniqueId}`;
 
