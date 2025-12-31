@@ -6,7 +6,7 @@ class settingController {
     res.json({ ...data })
   }
 
-  async   list(req, res) {
+  async list(req, res) {
     const data = await settingService.list()
     res.json({ ...data })
   }

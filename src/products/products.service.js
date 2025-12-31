@@ -739,6 +739,7 @@ class productService {
       const filteredPurity = parsedPurity.map(p => ({
         value: p.value,
         name: p.name,
+        diamonds:p.diamonds,
         profitOriginalPrice: p.original_price
           ? (Number(p.original_price) * conversionRate).toFixed(2)
           : null,

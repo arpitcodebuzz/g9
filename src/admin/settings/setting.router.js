@@ -8,4 +8,9 @@ routes.post('/', adminAuthentication, asyncWrap(settingController.add))
 routes.get('/get', adminAuthentication, asyncWrap(settingController.list))
 // routes.post('/edit/:id', adminAuthentication, asyncWrap(settingController.edit))
 
+
+
+
+
+
 export default routes;

@@ -1,44 +1,67 @@
 import knex from "../../common/config/database.config";
 
 class settingService {
+
+
   async add(body) {
     try {
-      const { deliveryCharge, InsuranceCharge, returnCharge, askPrice } = body;
+      const { deliveryCharge, InsuranceCharge, returnCharge, askPrice, diamondPrices, diamondProfit } = body;
 
-      const existing = await knex('settings').first()
+      let settingId;
+      const existing = await knex('settings').first();
 
       if (existing) {
-        await knex('settings').where({ id: existing.id })
+        await knex('settings')
+          .where({ id: existing.id })
           .update({
             deliveryCharge,
             InsuranceCharge,
             returnCharge,
-            askPrice
-          })
-
-        return {
-          status: true,
-          message: 'Charges updated successfully !!'
-        }
-      }
-      else {
-        await knex('settings').insert({
+            askPrice,
+            updatedAt: knex.fn.now()
+          });
+        settingId = existing.id;
+      } else {
+        const [id] = await knex('settings').insert({
           deliveryCharge,
           InsuranceCharge,
           returnCharge,
           askPrice
         });
-
-        return {
-          status: true,
-          message: 'Charges added successfully !!',
-        };
+        settingId = id;
       }
 
+      if (Array.isArray(diamondPrices)) {
+        for (const d of diamondPrices) {
+          const exists = await knex('diamonds')
+            .where({ diamondWeight: d.weight })
+            .first();
 
-    }
-    catch (err) {
-      console.log(err);
+          if (exists) {
+            await knex('diamonds')
+              .where({ diamondWeight: d.weight })
+              .update({
+                diamondPrice: d.amount || null,
+                diamondProfit: diamondProfit || null,
+                updatedAt: knex.fn.now()
+              });
+          } else {
+            await knex('diamonds').insert({
+              diamondWeight: d.weight,
+              diamondPrice: d.amount || null,
+              diamondProfit: diamondProfit || null
+            });
+          }
+        }
+      }
+
+      return {
+        status: true,
+        message: 'Settings and diamond prices saved successfully !!',
+      };
+
+    } catch (err) {
+      console.error(err);
       return {
         status: false,
         message: 'Something went wrong !!'
@@ -46,31 +69,59 @@ class settingService {
     }
   }
 
+
+
   async list() {
     try {
-      const data = await knex('settings').select().orderBy('createdAt', 'desc')
+      const setting = await knex('settings')
+        .first()
+        .orderBy('createdAt', 'desc');
 
-      if (!data || data.length === 0) {
+      if (!setting) {
         return {
           status: false,
           message: 'No settings found !!'
-        }
+        };
       }
+
+      const diamonds = await knex('diamonds')
+        .select('diamondWeight', 'diamondPrice', 'diamondProfit')
+        .orderBy('diamondWeight', 'desc');
+
+      const diamondPrices = diamonds.map(d => ({
+        weight: d.diamondWeight,
+        amount: d.diamondPrice || ""
+
+      }));
+
+      const diamondProfit = diamonds.length > 0 ? diamonds[0].diamondProfit || "" : "";
+
 
       return {
         status: true,
         message: 'Settings fetched successfully !!',
-        data
-      }
-    }
-    catch (err) {
-      console.log(err)
+        data: {
+          id: setting.id,
+          deliveryCharge: setting.deliveryCharge,
+          InsuranceCharge: setting.InsuranceCharge,
+          returnCharge: setting.returnCharge,
+          askPrice: setting.askPrice,
+          createdAt: setting.createdAt,
+          updatedAt: setting.updatedAt,
+          diamondPrices,
+          diamondProfit
+        }
+      };
+
+    } catch (err) {
+      console.error(err);
       return {
         status: false,
         message: 'Something went wrong !!'
-      }
+      };
     }
   }
+
 
   // async edit(params, body) {
   //   try {
